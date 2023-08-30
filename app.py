@@ -9,7 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 chrome_options = Options()
-chrome_options.add_argument('--headless')
+# chrome_options.add_argument('--headless=new')
+prefs = {"download.default_directory": "Users/allenchen/project"}
+chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_experimental_option("detach", True)
 
@@ -17,9 +19,10 @@ s = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=s, options=chrome_options)
 wait = WebDriverWait(driver, 20)
 
+driver.minimize_window()
 # Provide the path of chromedriver present on your system.
-driver = webdriver.Chrome()
-driver.set_window_size(1440, 1024)
+# driver = webdriver.Chrome()
+#driver.set_window_size(1440, 1024)
 
 # Send a get request to the url
 driver.get('https://platform.gfk.com/')
