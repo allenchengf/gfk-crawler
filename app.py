@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import os
 
 chrome_options = Options()
 # chrome_options.add_argument('--headless=new')
@@ -29,8 +30,8 @@ driver.get('https://platform.gfk.com/')
 
 time.sleep(15)
 
-driver.find_element("id", "email").send_keys('Allen.huang@elifemall.com.tw')
-driver.find_element("id", "password").send_keys('elifemall.9911')
+driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
+driver.find_element("id", "password").send_keys(os.environ['PASSWORD'])
 driver.find_element("name", "submit").click()
 
 time.sleep(20)
