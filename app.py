@@ -25,7 +25,6 @@ driver.maximize_window()
 driver.get('https://platform.gfk.com/')
 driver.implicitly_wait(90)
 
-# time.sleep(15)
 try:
     WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.NAME, 'submit')))
     driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
@@ -33,8 +32,6 @@ try:
     driver.find_element("name", "submit").click()
 except requests.exceptions.RequestException as e:
     print(e)
-
-# time.sleep(20)
 
 try:
     WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')))
@@ -46,12 +43,14 @@ try:
     driver.execute_script("arguments[0].click();", userContent)
     #driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button').click()
 
-    driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
+    saved = driver.find_element(By.XPATH, '//*[@id="saved-views"]')
+    driver.execute_script("arguments[0].click();", saved)
+    # driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
 except requests.exceptions.RequestException as e:
     print(e)
 
 
-time.sleep(30)
+time.sleep(15)
 
 links = []
 
@@ -68,17 +67,20 @@ for i in range(len(links)):
     driver.execute_script("window.open('');")
     driver.switch_to.window(driver.window_handles[i+1])
     driver.get(links[i])
-    time.sleep(30)
 
-    clickDownload = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button')
-    driver.execute_script("arguments[0].click();", clickDownload)
-    #driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button').click()
+    try:
+        WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[8]/div/div[1]')))
+        clickDownload = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button')
+        driver.execute_script("arguments[0].click();", clickDownload)
 
-    download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]')
-    driver.execute_script("arguments[0].click();", download)
-    #driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]').click()
+        download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]')
+        driver.execute_script("arguments[0].click();", download)
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+
     time.sleep(10)
 
-time.sleep(10)
+time.sleep(5)
 driver.quit()
 print("Done")
