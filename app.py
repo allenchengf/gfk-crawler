@@ -12,8 +12,8 @@ import requests
 
 chrome_options = Options()
 # chrome_options.add_argument('--headless=new')
-# prefs = {"download.default_directory": "Users/allenchen/project"}
-# chrome_options.add_experimental_option("prefs", prefs)
+prefs = {"download.default_directory": os.environ['DOWNLOAD_PATH']}
+chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_experimental_option("detach", True)
 
