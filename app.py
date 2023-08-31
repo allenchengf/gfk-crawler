@@ -8,43 +8,51 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import os
+import requests
 
 chrome_options = Options()
 # chrome_options.add_argument('--headless=new')
-prefs = {"download.default_directory": "Users/allenchen/project"}
-chrome_options.add_experimental_option("prefs", prefs)
+# prefs = {"download.default_directory": "Users/allenchen/project"}
+# chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_experimental_option("detach", True)
 
 s = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=s, options=chrome_options)
-wait = WebDriverWait(driver, 20)
-
-driver.minimize_window()
-# Provide the path of chromedriver present on your system.
-# driver = webdriver.Chrome()
-#driver.set_window_size(1440, 1024)
+driver.maximize_window()
 
 # Send a get request to the url
 driver.get('https://platform.gfk.com/')
+driver.implicitly_wait(90)
 
-time.sleep(15)
+# time.sleep(15)
+try:
+    WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.NAME, 'submit')))
+    driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
+    driver.find_element("id", "password").send_keys(os.environ['PASSWORD'])
+    driver.find_element("name", "submit").click()
+except requests.exceptions.RequestException as e:
+    print(e)
 
-driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
-driver.find_element("id", "password").send_keys(os.environ['PASSWORD'])
-driver.find_element("name", "submit").click()
+# time.sleep(20)
 
-time.sleep(20)
+try:
+    WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')))
+    # close cookie consent
+    cookieAlert = driver.find_element(By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')
+    driver.execute_script("arguments[0].click();", cookieAlert)
 
-driver.find_element(By.XPATH, '//*[@id="onetrust-close-btn-container"]/button').click()
+    userContent = driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button')
+    driver.execute_script("arguments[0].click();", userContent)
+    #driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button').click()
 
-driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button').click()
-driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
+    driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
+except requests.exceptions.RequestException as e:
+    print(e)
+
 
 time.sleep(30)
-print("start view page")
-print("-----------------------")
-# BeautifulSoup get saved view link
+
 links = []
 
 soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -54,7 +62,6 @@ for row in rows:
     link = columns[0].a['href']
     links.append(link)
 
-# print(links)
 
 for i in range(len(links)):
     print(i)
@@ -62,13 +69,16 @@ for i in range(len(links)):
     driver.switch_to.window(driver.window_handles[i+1])
     driver.get(links[i])
     time.sleep(30)
-    driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button').click()
-    driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]').click()
 
+    clickDownload = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button')
+    driver.execute_script("arguments[0].click();", clickDownload)
+    #driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button').click()
 
+    download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]')
+    driver.execute_script("arguments[0].click();", download)
+    #driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]').click()
+    time.sleep(10)
 
-
-
-time.sleep(20)
+time.sleep(10)
 driver.quit()
 print("Done")
