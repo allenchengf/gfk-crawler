@@ -7,12 +7,14 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-import os
+import os, stat
 import requests
+import time
+import logging
 
 def main():
     chrome_options = Options()
-    # chrome_options.add_argument('--headless=new')
+    chrome_options.add_argument('--headless=new')
     prefs = {"download.default_directory": os.environ['DOWNLOAD_PATH']}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -28,13 +30,19 @@ def main():
 
     try:
         WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.NAME, 'submit')))
+        loggingMessage("Start Process:")
+
+        loggingMessage("  " + os.environ['EMAIL'] + " login")
         driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
         driver.find_element("id", "password").send_keys(os.environ['PASSWORD'])
         driver.find_element("name", "submit").click()
+        loggingMessage("  Login Success")
     except requests.exceptions.RequestException as e:
+        loggingMessage(e)
         print(e)
 
     try:
+        loggingMessage("  Into Retailer Overview Page")
         WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')))
         # close cookie consent
         cookieAlert = driver.find_element(By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')
@@ -48,23 +56,24 @@ def main():
         driver.execute_script("arguments[0].click();", saved)
         # driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
     except requests.exceptions.RequestException as e:
+        loggingMessage(e)
         print(e)
 
 
     time.sleep(15)
-
+    loggingMessage("  Into Saved Views Page")
     links = []
-
+    names = []
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     rows = soup.find('table', {'class': 'Table saved-views-table'}).tbody.find_all('tr')
     for row in rows:
         columns = row.find_all('td')
         link = columns[0].a['href']
+        name = columns[0].p.text.strip()
         links.append(link)
-
+        names.append(name)
 
     for i in range(len(links)):
-        print(i)
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[i+1])
         driver.get(links[i])
@@ -77,14 +86,31 @@ def main():
             download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]')
             driver.execute_script("arguments[0].click();", download)
 
+            
         except requests.exceptions.RequestException as e:
+            loggingMessage(e)
             print(e)
 
         time.sleep(10)
+        downloadFileRename(names[i])
+
 
     time.sleep(5)
     driver.quit()
-    print("Done")
+    print("Process Done!")
+
+def downloadFileRename(name):
+    lists = os.listdir(os.environ['DOWNLOAD_PATH'])
+    lists.sort(key=lambda fn:os.path.getmtime(os.environ['DOWNLOAD_PATH'] + "\\" + fn))
+    latest_file = lists.pop()
+    os.chmod(os.environ['DOWNLOAD_PATH'] +"\\" + latest_file, stat.S_IRWXU)
+    os.rename(os.environ['DOWNLOAD_PATH'] +"\\" + latest_file, os.environ['DOWNLOAD_PATH'] + "\\" + name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+    loggingMessage("  Download " + os.environ['DOWNLOAD_PATH'] + "\\" + name + "_" +time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+
+def loggingMessage(message):
+    print(message)
+    logging.basicConfig(level=logging.INFO, filename='accesslog '+ time.strftime('%Y%m%d_%H_%M_%S') +'.log', filemode='a',format='%(asctime)s %(levelname)s: %(message)s')
+    logging.info(message)
 
 if __name__ == '__main__':
     main()
