@@ -14,6 +14,10 @@ poetry版本為：1.6.1
 ```bash
 git clone git@github.com:allenchengf/gfk-crawler.git
 ```
+### 複製.env
+```bash
+cp .env.example .env
+```
 
 ### 安裝套件
 ```bash
@@ -23,8 +27,8 @@ poetry env use python
 poetry install
 ```
 ## 使用
-以Pyinstaller指令執行匯出exe後，之後即可以exe執行檔搭配.env環境變數檔，執行下載動作
-![](/Users/allenchen/Downloads/螢幕擷取畫面 2023-09-01 133445.png)
+以Pyinstaller指令執行匯出exe後，即可搭配.env環境變數檔，執行下載動作
+<a href="https://imgur.com/NLj1B0P"><img src="https://i.imgur.com/NLj1B0P.png" title="source: imgur.com" /></a>
 ### 匯出執行檔exe
 ```bash
 pyinstaller -F ,\app.py
