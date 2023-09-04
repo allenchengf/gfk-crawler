@@ -12,6 +12,7 @@ import requests
 import time
 import logging
 
+
 def main():
     chrome_options = Options()
     chrome_options.add_argument('--headless=new')
@@ -30,38 +31,35 @@ def main():
 
     try:
         WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.NAME, 'submit')))
-        loggingMessage("Start Process:")
+        logging_message("Start Process:")
 
-        loggingMessage("  " + os.environ['EMAIL'] + " login")
+        logging_message("  " + os.environ['EMAIL'] + " login")
         driver.find_element("id", "email").send_keys(os.environ['EMAIL'])
         driver.find_element("id", "password").send_keys(os.environ['PASSWORD'])
         driver.find_element("name", "submit").click()
-        loggingMessage("  Login Success")
+        logging_message("  Login Success")
     except requests.exceptions.RequestException as e:
-        loggingMessage(e)
+        logging_message(e)
         print(e)
 
     try:
-        loggingMessage("  Into Retailer Overview Page")
+        logging_message("  Into Retailer Overview Page")
         WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')))
         # close cookie consent
-        cookieAlert = driver.find_element(By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')
-        driver.execute_script("arguments[0].click();", cookieAlert)
+        cookie_alert = driver.find_element(By.XPATH, '//*[@id="onetrust-close-btn-container"]/button')
+        driver.execute_script("arguments[0].click();", cookie_alert)
 
-        userContent = driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button')
-        driver.execute_script("arguments[0].click();", userContent)
-        #driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button').click()
+        user_content = driver.find_element(By.XPATH, '//*[@id="newron-header"]/div[2]/div/button')
+        driver.execute_script("arguments[0].click();", user_content)
 
         saved = driver.find_element(By.XPATH, '//*[@id="saved-views"]')
         driver.execute_script("arguments[0].click();", saved)
-        # driver.find_element(By.XPATH, '//*[@id="saved-views"]').click()
     except requests.exceptions.RequestException as e:
-        loggingMessage(e)
+        logging_message(e)
         print(e)
 
-
     time.sleep(15)
-    loggingMessage("  Into Saved Views Page")
+    logging_message("  Into Saved Views Page")
     links = []
     names = []
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -80,37 +78,38 @@ def main():
 
         try:
             WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[8]/div/div[1]')))
-            clickDownload = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button')
-            driver.execute_script("arguments[0].click();", clickDownload)
+            click_download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div/span[1]/button')
+            driver.execute_script("arguments[0].click();", click_download)
 
             download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span[2]/div[2]/div[1]/div/footer/button[1]')
             driver.execute_script("arguments[0].click();", download)
-
             
         except requests.exceptions.RequestException as e:
-            loggingMessage(e)
+            logging_message(e)
             print(e)
 
         time.sleep(10)
-        downloadFileRename(names[i])
-
+        download_file_rename(names[i])
 
     time.sleep(5)
     driver.quit()
     print("Process Done!")
 
-def downloadFileRename(name):
+
+def download_file_rename(name):
     lists = os.listdir(os.environ['DOWNLOAD_PATH'])
     lists.sort(key=lambda fn:os.path.getmtime(os.environ['DOWNLOAD_PATH'] + "\\" + fn))
     latest_file = lists.pop()
     os.chmod(os.environ['DOWNLOAD_PATH'] +"\\" + latest_file, stat.S_IRWXU)
     os.rename(os.environ['DOWNLOAD_PATH'] +"\\" + latest_file, os.environ['DOWNLOAD_PATH'] + "\\" + name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
-    loggingMessage("  Download " + os.environ['DOWNLOAD_PATH'] + "\\" + name + "_" +time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+    logging_message("  Download " + os.environ['DOWNLOAD_PATH'] + "\\" + name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
 
-def loggingMessage(message):
+
+def logging_message(message):
     print(message)
-    logging.basicConfig(level=logging.INFO, filename='accesslog '+ time.strftime('%Y%m%d_%H_%M_%S') +'.log', filemode='a',format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(level=logging.INFO, filename='accesslog ' + time.strftime('%Y%m%d_%H_%M_%S') + '.log', filemode='a',format='%(asctime)s %(levelname)s: %(message)s')
     logging.info(message)
+
 
 if __name__ == '__main__':
     main()
