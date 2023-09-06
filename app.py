@@ -17,10 +17,15 @@ import platform
 def main():
     chrome_options = Options()
     chrome_options.add_argument('--headless=new')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-extensions')
     prefs = {"download.default_directory": os.environ['DOWNLOAD_PATH']}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
     chrome_options.add_experimental_option("detach", True)
+    chrome_options.add_argument('--log-level=3')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
 
     s = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=s, options=chrome_options)
@@ -28,6 +33,7 @@ def main():
 
     # Send a get request to the url
     driver.get('https://platform.gfk.com/')
+    original_window = driver.current_window_handle
     driver.implicitly_wait(90)
 
     try:
@@ -75,9 +81,9 @@ def main():
 
     for i in range(len(links)):
         driver.execute_script("window.open('');")
-        driver.switch_to.window(driver.window_handles[i+1])
+        driver.switch_to.window(driver.window_handles[1])
+        # driver.switch_to.new_window('tab')
         driver.get(links[i])
-
         try:
             WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="newron-content'
                                                                                            '"]/div[1]/div[1]/div['
@@ -89,29 +95,34 @@ def main():
             download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span['
                                                      '2]/div[2]/div[1]/div/footer/button[1]')
             driver.execute_script("arguments[0].click();", download)
-            
+
         except requests.exceptions.RequestException as e:
             logging_message(e)
             print(e)
 
         time.sleep(10)
-        download_file_rename(names[i])
-
+        download_file_rename(names[i], driver, original_window)
+        
     time.sleep(5)
     driver.quit()
     print("Process Done!")
 
 
-def download_file_rename(name):
+def download_file_rename(name, driver, original_window):
     correct_path = get_path_by_os()
     lists = os.listdir(os.environ['DOWNLOAD_PATH'])
     lists.sort(key=lambda fn: os.path.getmtime(os.environ['DOWNLOAD_PATH'] + correct_path + fn))
     latest_file = lists.pop()
+    new_file_name = name.replace(' ', '_').replace('/', '_').replace('\\', '_').strip()
     os.chmod(os.environ['DOWNLOAD_PATH'] + correct_path + latest_file, stat.S_IRWXU)
     os.rename(os.environ['DOWNLOAD_PATH'] + correct_path + latest_file,
-              os.environ['DOWNLOAD_PATH'] + correct_path + name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+              os.environ['DOWNLOAD_PATH'] + correct_path + new_file_name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
     logging_message("  Download " + os.environ['DOWNLOAD_PATH'] + correct_path
-                    + name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+                    + new_file_name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+
+    driver.close()
+    driver.switch_to.window(original_window)
+
 
 
 def get_path_by_os():
