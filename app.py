@@ -12,14 +12,18 @@ import requests
 import time
 import logging
 import platform
+from ftplib import FTP
+ftp = FTP()
 
 
 def main():
+    correct_path = get_path_by_os()
+    current_directory = os.getcwd() + correct_path + "temp"
     chrome_options = Options()
     chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-extensions')
-    prefs = {"download.default_directory": os.environ['DOWNLOAD_PATH']}
+    prefs = {"download.default_directory": current_directory}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
     chrome_options.add_experimental_option("detach", True)
@@ -72,6 +76,9 @@ def main():
     names = []
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     rows = soup.find('table', {'class': 'Table saved-views-table'}).tbody.find_all('tr')
+
+    loging_ftp()
+
     for row in rows:
         columns = row.find_all('td')
         link = columns[0].a['href']
@@ -101,28 +108,60 @@ def main():
             print(e)
 
         time.sleep(10)
-        download_file_rename(names[i], driver, original_window)
-        
+        download_file_rename(names[i], driver, original_window, current_directory)
+
+    close_ftp()
     time.sleep(5)
     driver.quit()
     print("Process Done!")
 
 
-def download_file_rename(name, driver, original_window):
+def loging_ftp():
+    try:
+        ftp.encoding = 'utf-8'
+        ftp.connect(os.environ['FTP_SERVER'], 21)
+        ftp.login(os.environ['FTP_USER'], os.environ['FTP_PASSWORD'])
+        logging_message("  Login FTP")
+    except requests.exceptions.RequestException as e:
+        logging_message(e)
+        print(e)
+
+
+def close_ftp():
+    ftp.close()
+
+
+def download_file_rename(name, driver, original_window, current_directory):
     correct_path = get_path_by_os()
-    lists = os.listdir(os.environ['DOWNLOAD_PATH'])
-    lists.sort(key=lambda fn: os.path.getmtime(os.environ['DOWNLOAD_PATH'] + correct_path + fn))
+    lists = os.listdir(current_directory)
+    lists.sort(key=lambda fn: os.path.getmtime(current_directory + correct_path + fn))
     latest_file = lists.pop()
-    new_file_name = name.replace(' ', '_').replace('/', '_').replace('\\', '_').strip()
-    os.chmod(os.environ['DOWNLOAD_PATH'] + correct_path + latest_file, stat.S_IRWXU)
-    os.rename(os.environ['DOWNLOAD_PATH'] + correct_path + latest_file,
-              os.environ['DOWNLOAD_PATH'] + correct_path + new_file_name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
-    logging_message("  Download " + os.environ['DOWNLOAD_PATH'] + correct_path
-                    + new_file_name + "_" + time.strftime('%Y%m%d_%H_%M_%S') + '.xlsx')
+    new_file_path = current_directory + correct_path
+    new_file_name = name.replace(' ', '_').replace('/', '_').replace('\\', '_').strip() + "_" + time.strftime(
+        '%Y%m%d_%H_%M_%S') + '.xlsx'
+    original_file = current_directory + correct_path + latest_file
+    new_file = new_file_path + new_file_name
+    os.chmod(original_file, stat.S_IRWXU)
+    os.rename(original_file, new_file)
+    logging_message("  Download " + new_file)
+
+    upload_to_ftp(new_file, correct_path)
+
+    os.remove(new_file)
 
     driver.close()
     driver.switch_to.window(original_window)
 
+
+def upload_to_ftp(file_local, correct_path):
+    time.sleep(2)
+    file_name = file_local.split(correct_path)[-1]
+    bufsize = 1024
+    fp = open(file_local, 'rb')
+    ftp.storbinary('STOR %s' % os.environ['FTP_PATH'] + "/" + file_name, fp, bufsize)
+    logging_message("  Upload " + file_name)
+    ftp.set_debuglevel(0)
+    fp.close()
 
 
 def get_path_by_os():
@@ -136,7 +175,7 @@ def get_path_by_os():
 def logging_message(message):
     print(message)
     logging.basicConfig(level=logging.INFO, filename='accesslog ' + time.strftime('%Y%m%d_%H_%M_%S') + '.log',
-                        filemode='a',format='%(asctime)s %(levelname)s: %(message)s')
+                        filemode='a', format='%(asctime)s %(levelname)s: %(message)s')
     logging.info(message)
 
 
