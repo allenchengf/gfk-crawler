@@ -12,6 +12,7 @@ import requests
 import time
 import logging
 import platform
+import shutil
 from ftplib import FTP
 ftp = FTP()
 
@@ -86,6 +87,10 @@ def main():
         links.append(link)
         names.append(name)
 
+    logging_message("  Total: " + str(len(links)) + "links")
+    logging_message("  Total: " + str(len(names)) + "names")
+    logging_message("  Lists: \n" + ', \n'.join(names))
+
     for i in range(len(links)):
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[1])
@@ -112,6 +117,7 @@ def main():
 
     close_ftp()
     time.sleep(5)
+    remove_temp_file(current_directory, correct_path)
     driver.quit()
     print("Process Done!")
 
@@ -147,10 +153,17 @@ def download_file_rename(name, driver, original_window, current_directory):
 
     upload_to_ftp(new_file, correct_path)
 
-    os.remove(new_file)
+    # os.remove(new_file)
 
     driver.close()
     driver.switch_to.window(original_window)
+
+
+def remove_temp_file(current_directory, correct_path):
+    shutil.rmtree(current_directory)
+    os.mkdir(current_directory)
+    fp = open(current_directory + correct_path + ".gitignore", "w")
+    fp.close()
 
 
 def upload_to_ftp(file_local, correct_path):
