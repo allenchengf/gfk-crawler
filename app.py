@@ -98,13 +98,12 @@ def main():
         driver.get(links[i])
         try:
             WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="newron-content'
-                                                                                           '"]/div[1]/div[1]/div['
+                                                                                           '"]/div[1]/div[2]/div['
                                                                                            '8]/div/div[1]')))
-            click_download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div['
-                                                           '7]/div/header/span[2]/div/span[1]/button')
+            click_download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[2]/div[7]/div/header/span[2]/div/span[1]/button')
             driver.execute_script("arguments[0].click();", click_download)
 
-            download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[1]/div[7]/div/header/span['
+            download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[2]/div[7]/div/header/span['
                                                      '2]/div[2]/div[1]/div/footer/button[1]')
             driver.execute_script("arguments[0].click();", download)
 
