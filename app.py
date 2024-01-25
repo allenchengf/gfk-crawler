@@ -21,8 +21,11 @@ def main():
     correct_path = get_path_by_os()
     current_directory = os.getcwd() + correct_path + "temp"
     chrome_options = Options()
+
+    # 不需開啟瀏覽器
     chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--no-sandbox')
+
     chrome_options.add_argument('--disable-extensions')
     prefs = {"download.default_directory": current_directory}
     chrome_options.add_experimental_option("prefs", prefs)
@@ -100,11 +103,11 @@ def main():
             WebDriverWait(driver, 30, 0.5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="newron-content'
                                                                                            '"]/div[1]/div[2]/div['
                                                                                            '8]/div/div[1]')))
-            click_download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[2]/div[7]/div/header/span[2]/div/span[1]/button')
+
+            click_download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div/div[2]/div[7]/div/div[1]/span[2]/span/div/span[1]/button')
             driver.execute_script("arguments[0].click();", click_download)
 
-            download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div[1]/div[2]/div[7]/div/header/span['
-                                                     '2]/div[2]/div[1]/div/footer/button[1]')
+            download = driver.find_element(By.XPATH, '//*[@id="newron-content"]/div/div[2]/div[7]/div/div[1]/span[2]/span/div[2]/div[1]/div/footer/button[1]')
             driver.execute_script("arguments[0].click();", download)
 
         except requests.exceptions.RequestException as e:
